@@ -15,9 +15,13 @@ namespace avaness.SkyboxPlugin
         public void Init(object gameInstance)
         {
             list = new SkyboxList();
+            list.OnListReady += List_OnListReady;
+        }
 
+        private void List_OnListReady()
+        {
             MyLog.Default.WriteLine("Skyboxes: ");
-            foreach(Skybox skybox in list)
+            foreach (Skybox skybox in list)
             {
                 MyLog.Default.WriteLine(skybox.ToString());
             }

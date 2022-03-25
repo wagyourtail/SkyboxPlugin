@@ -9,19 +9,19 @@ namespace avaness.SkyboxPlugin
 {
     public class Skybox
     {
-        public string Path { get; }
+        public string ModName { get; }
 
         private readonly MyObjectBuilder_EnvironmentDefinition definition;
 
-        public Skybox(MyObjectBuilder_EnvironmentDefinition definition)
+        public Skybox(Steamworks.SteamUGCDetails_t details, MyObjectBuilder_EnvironmentDefinition definition)
         {
+            ModName = details.m_rgchTitle;
             this.definition = definition;
-            Path = definition.EnvironmentTexture;
         }
 
         public override string ToString()
         {
-            return "Skybox:'" + (Path ?? "null") + "'";
+            return "Skybox:'" + ModName + "'";
         }
     }
 }

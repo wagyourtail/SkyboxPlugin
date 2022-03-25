@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using Steamworks;
 using VRage.FileSystem;
 using VRage.Game;
 using VRage.ObjectBuilders;
@@ -16,6 +15,8 @@ namespace avaness.SkyboxPlugin
     {
         Dictionary<ulong, Skybox> skyboxes = new Dictionary<ulong, Skybox>();
 
+        public event Action OnListReady;
+
         public SkyboxList()
         {
             PopulateSkyboxList();
@@ -24,8 +25,9 @@ namespace avaness.SkyboxPlugin
         private void PopulateSkyboxList()
         {
             string workshop = Path.GetFullPath(@"..\..\..\workshop\content\244850\");
+            Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition> newSkyboxes = new Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition>();
 
-            foreach (ulong id in GetSubscribedWorkshopItems())
+            foreach (ulong id in SteamAPI.GetSubscribedWorkshopItems())
             {
                 string modPath = Path.Combine(workshop, id.ToString());
                 if (!Directory.Exists(modPath))
@@ -33,60 +35,81 @@ namespace avaness.SkyboxPlugin
 
                 if (Directory.Exists(Path.Combine(modPath, "Data")))
                 {
-                    SearchModForSkybox(id, modPath);
+                    if (TryGetModDefinition(modPath, out MyObjectBuilder_EnvironmentDefinition definition))
+                        newSkyboxes[id] = definition;
                 }
                 else
                 {
                     string legacyFile = Directory.EnumerateFiles(modPath, "*_legacy.bin").FirstOrDefault();
-                    if (legacyFile != null)
-                        SearchLegacyFileForSkybox(id, legacyFile);
+                    if (legacyFile != null && TryGetLegacyFileDefinition(legacyFile, out MyObjectBuilder_EnvironmentDefinition definition))
+                        newSkyboxes[id] = definition;
                 }
             }
+
+            SteamAPI.GetItemDetails((x) => OnItemDetailsFound(x, newSkyboxes));
         }
 
-        private void SearchLegacyFileForSkybox(ulong id, string legacyFile)
+        private void OnItemDetailsFound(Dictionary<ulong, Steamworks.SteamUGCDetails_t> itemDetails, Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition> itemDefinitions)
         {
+            foreach(var details in itemDetails.Values)
+            {
+                ulong key = details.m_nPublishedFileId.m_PublishedFileId;
+                if(itemDefinitions.TryGetValue(key, out var itemDefinition))
+                {
+                    skyboxes[key] = new Skybox(details, itemDefinition);
+                }
+            }
+            if (OnListReady != null)
+                OnListReady.Invoke();
+        }
+
+        private bool TryGetLegacyFileDefinition(string legacyFile, out MyObjectBuilder_EnvironmentDefinition definition)
+        {
+            definition = null;
             foreach (string file in MyFileSystem.GetFiles(legacyFile, "*.sbc", MySearchOption.AllDirectories))
             {
-                if (TryGetEnvironmentFile(MyFileSystem.OpenRead(file), out MyObjectBuilder_EnvironmentDefinition def))
+                if (TryGetEnvironmentFile(MyFileSystem.OpenRead(file), out MyObjectBuilder_EnvironmentDefinition fileDefinition))
                 {
-                    if (!string.IsNullOrWhiteSpace(def.EnvironmentTexture))
+                    if (!string.IsNullOrWhiteSpace(fileDefinition.EnvironmentTexture))
                     {
-                        string texture = Path.Combine(legacyFile, def.EnvironmentTexture);
+                        string texture = Path.Combine(legacyFile, fileDefinition.EnvironmentTexture);
                         if (MyFileSystem.FileExists(texture))
                         {
-                            def.EnvironmentTexture = texture;
-                            var skybox = new Skybox(def);
-                            skyboxes[id] = skybox;
+                            fileDefinition.EnvironmentTexture = texture;
+                            definition = fileDefinition;
+                            return true;
                         }
                     }
 
                     break;
                 }
             }
+            return false;
         }
 
-        private void SearchModForSkybox(ulong id, string modPath)
+        private bool TryGetModDefinition(string modPath, out MyObjectBuilder_EnvironmentDefinition definition)
         {
+            definition = null;
             string modDataPath = Path.Combine(modPath, "Data");
             foreach (string file in Directory.EnumerateFiles(modDataPath, "*.sbc", SearchOption.AllDirectories))
             {
-                if (TryGetEnvironmentFile(File.OpenRead(file), out MyObjectBuilder_EnvironmentDefinition def))
+                if (TryGetEnvironmentFile(File.OpenRead(file), out MyObjectBuilder_EnvironmentDefinition fileDefinition))
                 {
-                    if (!string.IsNullOrWhiteSpace(def.EnvironmentTexture))
+                    if (!string.IsNullOrWhiteSpace(fileDefinition.EnvironmentTexture))
                     {
-                        string texture = Path.Combine(modPath, def.EnvironmentTexture);
+                        string texture = Path.Combine(modPath, fileDefinition.EnvironmentTexture);
                         if(File.Exists(texture))
                         {
-                            def.EnvironmentTexture = texture;
-                            var skybox = new Skybox(def);
-                            skyboxes[id] = skybox;
+                            fileDefinition.EnvironmentTexture = texture;
+                            definition = fileDefinition;
+                            return true;
                         }
                     }
 
                     break;
                 }
             }
+            return false;
         }
 
         private bool TryGetEnvironmentFile(Stream stream, out MyObjectBuilder_EnvironmentDefinition definition)
@@ -139,18 +162,6 @@ namespace avaness.SkyboxPlugin
             }
 
             return definition != null;
-        }
-
-        private IEnumerable<ulong> GetSubscribedWorkshopItems()
-        {
-            uint numItems = SteamUGC.GetNumSubscribedItems();
-            if (numItems <= 0)
-                return new ulong[0];
-            PublishedFileId_t[] ids = new PublishedFileId_t[numItems];
-            uint actualNumItems = SteamUGC.GetSubscribedItems(ids, numItems);
-            if (actualNumItems < numItems)
-                return ids.Where((x, i) => i < actualNumItems).Select(x => x.m_PublishedFileId);
-            return ids.Select(x => x.m_PublishedFileId);
         }
 
         public IEnumerator<Skybox> GetEnumerator()

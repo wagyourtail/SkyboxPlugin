@@ -8,6 +8,7 @@ using VRage.FileSystem;
 using VRage.Game;
 using VRage.ObjectBuilders;
 using VRage.Utils;
+using ParallelTasks;
 
 namespace avaness.SkyboxPlugin
 {
@@ -25,7 +26,6 @@ namespace avaness.SkyboxPlugin
         private void PopulateSkyboxList()
         {
             string workshop = Path.GetFullPath(@"..\..\..\workshop\content\244850\");
-            Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition> newSkyboxes = new Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition>();
 
             foreach (ulong id in SteamAPI.GetSubscribedWorkshopItems())
             {
@@ -36,29 +36,30 @@ namespace avaness.SkyboxPlugin
                 if (Directory.Exists(Path.Combine(modPath, "Data")))
                 {
                     if (TryGetModDefinition(modPath, out MyObjectBuilder_EnvironmentDefinition definition))
-                        newSkyboxes[id] = definition;
+                        skyboxes[id] = new Skybox(new WorkshopInfo(id, modPath), definition);
                 }
                 else
                 {
                     string legacyFile = Directory.EnumerateFiles(modPath, "*_legacy.bin").FirstOrDefault();
                     if (legacyFile != null && TryGetLegacyFileDefinition(legacyFile, out MyObjectBuilder_EnvironmentDefinition definition))
-                        newSkyboxes[id] = definition;
+                        skyboxes[id] = new Skybox(new WorkshopInfo(id, legacyFile), definition);
                 }
             }
 
-            SteamAPI.GetItemDetails((x) => OnItemDetailsFound(x, newSkyboxes));
+            SteamAPI.GetItemDetails(skyboxes.Keys, OnItemDetailsFound);
         }
 
-        private void OnItemDetailsFound(Dictionary<ulong, Steamworks.SteamUGCDetails_t> itemDetails, Dictionary<ulong, MyObjectBuilder_EnvironmentDefinition> itemDefinitions)
+        private void OnItemDetailsFound(Dictionary<ulong, Steamworks.SteamUGCDetails_t> itemDetails)
         {
-            foreach(var details in itemDetails.Values)
+            foreach(Skybox skybox in skyboxes.Values)
             {
-                ulong key = details.m_nPublishedFileId.m_PublishedFileId;
-                if(itemDefinitions.TryGetValue(key, out var itemDefinition))
-                {
-                    skyboxes[key] = new Skybox(details, itemDefinition);
-                }
+                WorkshopInfo info = skybox.Info;
+                if (itemDetails.TryGetValue(info.ItemId, out var details))
+                    info.AddDetails(details);
+                else
+                    MyLog.Default.WriteLine("Failed to add details to " + info.ItemId);
             }
+
             if (OnListReady != null)
                 OnListReady.Invoke();
         }
@@ -152,9 +153,22 @@ namespace avaness.SkyboxPlugin
                 MyObjectBuilder_Definitions baseObject;
                 if (!MyObjectBuilderSerializer.DeserializeXML(stream, out baseObject) || baseObject == null)
                     return false;
+
                 if (baseObject.Environments == null || baseObject.Environments.Length == 0)
-                    return false;
-                definition = baseObject.Environments[0];
+                {
+                    foreach(var def in baseObject.Definitions)
+                    {
+                        if(def is MyObjectBuilder_EnvironmentDefinition envDef)
+                        {
+                            definition = envDef;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    definition = baseObject.Environments[0];
+                }
             }
             catch
             {

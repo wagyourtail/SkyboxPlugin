@@ -21,30 +21,23 @@ namespace avaness.SkyboxPlugin
             return ids.Select(x => x.m_PublishedFileId);
         }
 
-        public static void GetItemDetails(Action<Dictionary<ulong, SteamUGCDetails_t>> callback)
+        public static void GetItemDetails(IEnumerable<ulong> ids, Action<Dictionary<ulong, SteamUGCDetails_t>> callback)
         {
-            uint numItems = SteamUGC.GetNumSubscribedItems();
-            if (numItems > 0)
-            {
-                PublishedFileId_t[] ids = new PublishedFileId_t[numItems];
-                numItems = SteamUGC.GetSubscribedItems(ids, numItems);
-                if (numItems == 0)
-                    return;
+            PublishedFileId_t[] publishedIds = ids.Select(x => new PublishedFileId_t(x)).ToArray();
 
-                UGCQueryHandle_t detailsQuery = SteamUGC.CreateQueryUGCDetailsRequest(ids, numItems);
-                if (detailsQuery == UGCQueryHandle_t.Invalid)
-                    return;
+            UGCQueryHandle_t detailsQuery = SteamUGC.CreateQueryUGCDetailsRequest(publishedIds, (uint)publishedIds.Length);
+            if (detailsQuery == UGCQueryHandle_t.Invalid)
+                return;
 
-                SteamUGC.AddRequiredTag(detailsQuery, "mod");
+            SteamUGC.AddRequiredTag(detailsQuery, "mod");
 
-                SteamAPICall_t detailsApiCall = SteamUGC.SendQueryUGCRequest(detailsQuery);
-                if (detailsApiCall == SteamAPICall_t.Invalid)
-                    return;
-                var callresult = CallResult<SteamUGCQueryCompleted_t>.Create((x, y) => SteamUGCQueryCompleted(x, y, callback));
-                callresult.Set(detailsApiCall);
+            SteamAPICall_t detailsApiCall = SteamUGC.SendQueryUGCRequest(detailsQuery);
+            if (detailsApiCall == SteamAPICall_t.Invalid)
+                return;
+            var callresult = CallResult<SteamUGCQueryCompleted_t>.Create((x, y) => SteamUGCQueryCompleted(x, y, callback));
+            callresult.Set(detailsApiCall);
 
-                SteamUGC.ReleaseQueryUGCRequest(detailsQuery);
-            }
+            SteamUGC.ReleaseQueryUGCRequest(detailsQuery);
         }
 
         private static void SteamUGCQueryCompleted(SteamUGCQueryCompleted_t param, bool bIOFailure, Action<Dictionary<ulong, SteamUGCDetails_t>> callback)

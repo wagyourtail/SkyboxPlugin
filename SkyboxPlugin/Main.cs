@@ -1,27 +1,37 @@
-﻿using VRage.Plugins;
+﻿using Sandbox.Graphics.GUI;
+using VRage.Plugins;
 using VRage.Utils;
 
 namespace avaness.SkyboxPlugin
 {
     public class Main : IPlugin
     {
-        SkyboxList list;
+        public static Main Instance;
+
+        public SkyboxList List { get; }
+        public Skybox SelectedSkybox { get; set; }
+
+        public Main()
+        {
+            Instance = this;
+            List = new SkyboxList();
+            List.OnListReady += List_OnListReady;
+        }
 
         public void Dispose()
         {
-
+            Instance = null;
         }
 
         public void Init(object gameInstance)
         {
-            list = new SkyboxList();
-            list.OnListReady += List_OnListReady;
+
         }
 
         private void List_OnListReady()
         {
             MyLog.Default.WriteLine("Skyboxes: ");
-            foreach (Skybox skybox in list)
+            foreach (Skybox skybox in List)
             {
                 MyLog.Default.WriteLine(skybox.ToString());
             }
@@ -35,7 +45,7 @@ namespace avaness.SkyboxPlugin
 
         public void OpenConfigDialog()
         {
-
+            MyGuiSandbox.AddScreen(new MyGuiScreenSkyboxConfig());
         }
     }
 }

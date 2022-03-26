@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Sandbox.Definitions;
+using Sandbox.Game.World;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,19 +11,33 @@ namespace avaness.SkyboxPlugin
 {
     public class Skybox
     {
-        public string ModName { get; }
+        public WorkshopInfo Info { get; }
 
         private readonly MyObjectBuilder_EnvironmentDefinition definition;
 
-        public Skybox(Steamworks.SteamUGCDetails_t details, MyObjectBuilder_EnvironmentDefinition definition)
+        public static Skybox Default = new Skybox(null, new MyObjectBuilder_EnvironmentDefinition());
+
+        public Skybox(WorkshopInfo workshop, MyObjectBuilder_EnvironmentDefinition definition)
         {
-            ModName = details.m_rgchTitle;
+            Info = workshop;
             this.definition = definition;
+        }
+
+        public void Load()
+        {
+            MyObjectBuilder_EnvironmentDefinition ob = definition;
+            MyEnvironmentDefinition def = MySector.EnvironmentDefinition;
+            if (def == null)
+                return;
+
+            def.EnvironmentTexture = ob.EnvironmentTexture;
+            def.EnvironmentOrientation = ob.EnvironmentOrientation;
+            def.SunProperties = ob.SunProperties;
         }
 
         public override string ToString()
         {
-            return "Skybox:'" + ModName + "'";
+            return "Skybox:'" + Info.Title + "'";
         }
     }
 }

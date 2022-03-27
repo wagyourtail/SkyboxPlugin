@@ -54,7 +54,7 @@ namespace avaness.SkyboxPlugin
             foreach(Skybox skybox in skyboxes.Values)
             {
                 WorkshopInfo info = skybox.Info;
-                if (itemDetails.TryGetValue(info.ItemId, out var details))
+                if (itemDetails.TryGetValue(info.ItemId, out Steamworks.SteamUGCDetails_t details))
                     info.AddDetails(details);
                 else
                     MyLog.Default.WriteLine("Failed to add details to " + info.ItemId);
@@ -156,7 +156,7 @@ namespace avaness.SkyboxPlugin
 
                 if (baseObject.Environments == null || baseObject.Environments.Length == 0)
                 {
-                    foreach(var def in baseObject.Definitions)
+                    foreach(MyObjectBuilder_DefinitionBase def in baseObject.Definitions)
                     {
                         if(def is MyObjectBuilder_EnvironmentDefinition envDef)
                         {

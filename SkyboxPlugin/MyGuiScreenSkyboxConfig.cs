@@ -1,4 +1,5 @@
 ﻿using Sandbox;
+using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,8 @@ namespace avaness.SkyboxPlugin
             listbox.VisibleRowsCount = 10;
             Controls.Add(listbox);
             listbox.ItemsSelected += Listbox_ItemsSelected;
+
+
         }
 
         private void Listbox_ItemsSelected(MyGuiControlListbox listbox)
@@ -62,7 +65,7 @@ namespace avaness.SkyboxPlugin
 
             Main.Instance.SelectedSkybox = skybox;
 
-            if(MySandboxGame.Static != null && skybox != null)
+            if(MySession.Static != null && skybox != null)
                 skybox.Load();
         }
     }

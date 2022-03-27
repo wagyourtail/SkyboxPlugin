@@ -7,10 +7,9 @@ using VRage.Utils;
 namespace avaness.SkyboxPlugin
 {
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public class MySession : MySessionComponentBase
+    public class SkyboxSession : MySessionComponentBase
     {
-
-        public override void LoadData()
+        public override void BeforeStart()
         {
             Main.Instance.SelectedSkybox?.Load();
         }

@@ -15,7 +15,7 @@ namespace avaness.SkyboxPlugin
 
         private readonly MyObjectBuilder_EnvironmentDefinition definition;
 
-        public static Skybox Default = new Skybox(null, new MyObjectBuilder_EnvironmentDefinition());
+        public static Skybox Default { get; } = new Skybox(null, new MyObjectBuilder_EnvironmentDefinition());
 
         public Skybox(WorkshopInfo workshop, MyObjectBuilder_EnvironmentDefinition definition)
         {

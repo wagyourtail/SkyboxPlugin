@@ -1,11 +1,9 @@
 ﻿using Sandbox;
 using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using VRage;
+using VRage.Utils;
 using VRageMath;
 
 namespace avaness.SkyboxPlugin
@@ -52,7 +50,16 @@ namespace avaness.SkyboxPlugin
             Controls.Add(listbox);
             listbox.ItemsSelected += Listbox_ItemsSelected;
 
+            CloseButtonEnabled = true;
 
+            MyGuiControlButton closeBtn = new MyGuiControlButton(new Vector2(0, (Size.Value.Y * 0.5f) - MyGuiConstants.SCREEN_CAPTION_DELTA_Y), originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, text: MyTexts.Get(MyCommonTexts.Close), onButtonClick: OnCloseButtonClick);
+            Controls.Add(closeBtn);
+
+        }
+
+        private void OnCloseButtonClick(MyGuiControlButton btn)
+        {
+            CloseScreen();
         }
 
         private void Listbox_ItemsSelected(MyGuiControlListbox listbox)

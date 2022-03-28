@@ -23,6 +23,11 @@ namespace avaness.SkyboxPlugin
             PopulateSkyboxList();
         }
 
+        public bool TryGetSkybox(ulong id, out Skybox skybox)
+        {
+            return skyboxes.TryGetValue(id, out skybox);
+        }
+
         private void PopulateSkyboxList()
         {
             string workshop = Path.GetFullPath(@"..\..\..\workshop\content\244850\");

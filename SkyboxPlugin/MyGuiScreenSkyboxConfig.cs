@@ -1,6 +1,8 @@
 ﻿using Sandbox;
 using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
+using System;
+using System.Linq;
 using System.Text;
 using VRage;
 using VRage.Utils;
@@ -10,6 +12,8 @@ namespace avaness.SkyboxPlugin
 {
     public class MyGuiScreenSkyboxConfig : MyGuiScreenBase
     {
+        private Skybox selectedSkybox; 
+
         public override string GetFriendlyName()
         {
             return "MyGuiScreenSkyboxConfig";
@@ -17,7 +21,12 @@ namespace avaness.SkyboxPlugin
 
         public MyGuiScreenSkyboxConfig() : base(new Vector2(0.5f), MyGuiConstants.SCREEN_BACKGROUND_COLOR, new Vector2(0.5f, 0.7f), false, null, MySandboxGame.Config.UIBkOpacity, MySandboxGame.Config.UIOpacity)
         {
+        }
 
+        public override void UnloadContent()
+        {
+            if (Main.Instance.SelectedSkybox != selectedSkybox)
+                Main.Instance.SelectedSkybox.Load();
         }
 
         public override void LoadContent()
@@ -36,44 +45,45 @@ namespace avaness.SkyboxPlugin
         {
             AddCaption("Skybox Config");
 
+            selectedSkybox = Main.Instance.SelectedSkybox;
+
             MyGuiControlListbox listbox = new MyGuiControlListbox();
             listbox.Add(new MyGuiControlListbox.Item(new StringBuilder("None"), userData: Skybox.Default));
-            foreach (Skybox skybox in Main.Instance.List)
+            foreach (Skybox skybox in Main.Instance.List.OrderBy(x => x.Info.Title))
             {
                 var listItem = new MyGuiControlListbox.Item(new StringBuilder(skybox.Info.Title), userData: skybox);
                 listbox.Add(listItem);
-                if (skybox == Main.Instance.SelectedSkybox)
+                if (skybox == selectedSkybox)
                     listbox.SelectSingleItem(listItem);
             }
             listbox.MultiSelect = false;
-            listbox.VisibleRowsCount = 10;
+            listbox.VisibleRowsCount = 14;
             Controls.Add(listbox);
             listbox.ItemsSelected += Listbox_ItemsSelected;
 
             CloseButtonEnabled = true;
 
-            MyGuiControlButton closeBtn = new MyGuiControlButton(new Vector2(0, (Size.Value.Y * 0.5f) - MyGuiConstants.SCREEN_CAPTION_DELTA_Y), originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, text: MyTexts.Get(MyCommonTexts.Close), onButtonClick: OnCloseButtonClick);
+            MyGuiControlButton closeBtn = new MyGuiControlButton(new Vector2(0, (Size.Value.Y * 0.5f) - (MyGuiConstants.SCREEN_CAPTION_DELTA_Y / 2f)), originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, text: new StringBuilder("Save"), onButtonClick: OnCloseButtonClick);
             Controls.Add(closeBtn);
 
         }
 
         private void OnCloseButtonClick(MyGuiControlButton btn)
         {
+            Main.Instance.SetSkybox(selectedSkybox);
+
             CloseScreen();
         }
 
         private void Listbox_ItemsSelected(MyGuiControlListbox listbox)
         {
-            Skybox skybox;
             if (listbox.SelectedItems.Count > 0)
-                skybox = listbox.SelectedItems[0].UserData as Skybox;
+                selectedSkybox = listbox.SelectedItems[0].UserData as Skybox;
             else
-                skybox = null;
+                selectedSkybox = Skybox.Default;
 
-            Main.Instance.SelectedSkybox = skybox;
-
-            if(MySession.Static != null && skybox != null)
-                skybox.Load();
+            if (MySession.Static != null)
+                selectedSkybox.Load();
         }
     }
 }

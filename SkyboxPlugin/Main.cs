@@ -1,4 +1,6 @@
-﻿using Sandbox.Graphics.GUI;
+﻿using Sandbox.Game.World;
+using Sandbox.Graphics.GUI;
+using System;
 using VRage.Plugins;
 using VRage.Utils;
 
@@ -8,12 +10,16 @@ namespace avaness.SkyboxPlugin
     {
         public static Main Instance;
 
+        public ConfigFile Settings { get; }
         public SkyboxList List { get; }
-        public Skybox SelectedSkybox { get; set; }
+        public Skybox SelectedSkybox { get; private set; } = Skybox.Default;
 
         public Main()
         {
             Instance = this;
+
+            Settings = ConfigFile.Load();
+
             List = new SkyboxList();
             List.OnListReady += List_OnListReady;
         }
@@ -30,12 +36,8 @@ namespace avaness.SkyboxPlugin
 
         private void List_OnListReady()
         {
-            MyLog.Default.WriteLine("Skyboxes: ");
-            foreach (Skybox skybox in List)
-            {
-                MyLog.Default.WriteLine(skybox.ToString());
-            }
-            MyLog.Default.Flush();
+            if (Settings.SelectedSkybox != 0 && List.TryGetSkybox(Settings.SelectedSkybox, out Skybox selected))
+                SelectedSkybox = selected;
         }
 
         public void Update()
@@ -46,6 +48,22 @@ namespace avaness.SkyboxPlugin
         public void OpenConfigDialog()
         {
             MyGuiSandbox.AddScreen(new MyGuiScreenSkyboxConfig());
+        }
+
+        public void SetSkybox(Skybox skybox)
+        {
+            if (skybox.Info == null)
+            {
+                Settings.SelectedSkybox = 0;
+            }
+            else
+            {
+                Settings.SelectedSkybox = skybox.Info.ItemId;
+                if (MySession.Static != null && skybox != null)
+                    skybox.Load();
+            }
+            SelectedSkybox = skybox;
+            Settings.Save();
         }
     }
 }

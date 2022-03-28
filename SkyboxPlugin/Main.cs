@@ -1,8 +1,6 @@
 ﻿using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
-using System;
 using VRage.Plugins;
-using VRage.Utils;
 
 namespace avaness.SkyboxPlugin
 {

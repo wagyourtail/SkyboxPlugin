@@ -3,12 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Serialization;
 using VRage.FileSystem;
 using VRage.Game;
 using VRage.ObjectBuilders;
 using VRage.Utils;
-using ParallelTasks;
 
 namespace avaness.SkyboxPlugin
 {

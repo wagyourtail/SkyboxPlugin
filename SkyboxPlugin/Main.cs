@@ -1,5 +1,6 @@
 ﻿using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
+using System.Text;
 using VRage.Plugins;
 
 namespace avaness.SkyboxPlugin
@@ -45,7 +46,10 @@ namespace avaness.SkyboxPlugin
 
         public void OpenConfigDialog()
         {
-            MyGuiSandbox.AddScreen(new MyGuiScreenSkyboxConfig());
+            if (List.Ready)
+                MyGuiSandbox.AddScreen(new MyGuiScreenSkyboxConfig());
+            else
+                MyGuiSandbox.AddScreen(MyGuiSandbox.CreateMessageBox(messageCaption: new StringBuilder("Error"), messageText: new StringBuilder("Skybox config is not ready. Try again in a few seconds.")));
         }
 
         public void SetSkybox(Skybox skybox)

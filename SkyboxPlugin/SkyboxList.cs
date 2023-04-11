@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,6 +33,7 @@ namespace avaness.SkyboxPlugin
         {
             string workshop = Path.GetFullPath(@"..\..\..\workshop\content\244850\");
 
+            ConcurrentQueue<Skybox> skyboxes = new ConcurrentQueue<Skybox>();
             Parallel.ForEach(SteamAPI.GetSubscribedWorkshopItems(), id =>
             {
                 string modPath = Path.Combine(workshop, id.ToString());
@@ -41,17 +43,18 @@ namespace avaness.SkyboxPlugin
                 if (Directory.Exists(Path.Combine(modPath, "Data")))
                 {
                     if (TryGetModDefinition(modPath, out MyObjectBuilder_EnvironmentDefinition definition))
-                        skyboxes[id] = new Skybox(new WorkshopInfo(id, modPath), definition);
+                        skyboxes.Enqueue(new Skybox(new WorkshopInfo(id, modPath), definition));
                 }
                 else
                 {
                     string legacyFile = Directory.EnumerateFiles(modPath, "*_legacy.bin").FirstOrDefault();
                     if (legacyFile != null && TryGetLegacyFileDefinition(legacyFile, out MyObjectBuilder_EnvironmentDefinition definition))
-                        skyboxes[id] = new Skybox(new WorkshopInfo(id, legacyFile), definition);
+                        skyboxes.Enqueue(new Skybox(new WorkshopInfo(id, legacyFile), definition));
                 }
             });
 
-            SteamAPI.GetItemDetails(skyboxes.Keys, OnItemDetailsFound);
+            this.skyboxes = skyboxes.ToDictionary(x => x.Info.ItemId);
+            SteamAPI.GetItemDetails(this.skyboxes.Keys, OnItemDetailsFound);
         }
 
         private void OnItemDetailsFound(Dictionary<ulong, Steamworks.SteamUGCDetails_t> itemDetails)

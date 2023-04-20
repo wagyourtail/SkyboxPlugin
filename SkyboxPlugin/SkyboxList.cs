@@ -21,7 +21,7 @@ namespace avaness.SkyboxPlugin
 
         public SkyboxList()
         {
-            Task.Run(PopulateSkyboxList);
+            PopulateSkyboxList();
         }
 
         public bool TryGetSkybox(ulong id, out Skybox skybox)

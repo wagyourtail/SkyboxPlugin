@@ -160,7 +160,7 @@ namespace avaness.SkyboxPlugin
             try
             {
                 MyObjectBuilder_Definitions baseObject;
-                if (!MyObjectBuilderSerializer.DeserializeXML(stream, out baseObject) || baseObject == null)
+                if (!VRage.ObjectBuilders.Private.MyObjectBuilderSerializerKeen.DeserializeXML(stream, out baseObject) || baseObject == null)
                     return false;
 
                 if (baseObject.Environments == null || baseObject.Environments.Length == 0)

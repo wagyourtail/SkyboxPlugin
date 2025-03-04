@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using VRage.FileSystem;
 using VRage.Game;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 
 namespace avaness.SkyboxPlugin
@@ -27,6 +26,13 @@ namespace avaness.SkyboxPlugin
         public bool TryGetSkybox(ulong id, out Skybox skybox)
         {
             return skyboxes.TryGetValue(id, out skybox);
+        }
+
+        public void Update()
+        {
+            skyboxes.Clear();
+            Ready = false;
+            PopulateSkyboxList();
         }
 
         private void PopulateSkyboxList()

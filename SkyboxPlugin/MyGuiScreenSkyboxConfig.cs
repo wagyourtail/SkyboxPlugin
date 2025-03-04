@@ -19,6 +19,7 @@ namespace avaness.SkyboxPlugin
 
         public MyGuiScreenSkyboxConfig() : base(new Vector2(0.5f), MyGuiConstants.SCREEN_BACKGROUND_COLOR, new Vector2(0.5f, 0.7f), false, null, MySandboxGame.Config.UIBkOpacity, MySandboxGame.Config.UIOpacity)
         {
+            Main.Instance.List.OnListReady += OnSkyboxListReady;
         }
 
         public override void UnloadContent()
@@ -61,16 +62,33 @@ namespace avaness.SkyboxPlugin
 
             CloseButtonEnabled = true;
 
-            MyGuiControlButton closeBtn = new MyGuiControlButton(new Vector2(0, (Size.Value.Y * 0.5f) - (MyGuiConstants.SCREEN_CAPTION_DELTA_Y / 2f)), originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, text: new StringBuilder("Save"), onButtonClick: OnCloseButtonClick);
+            MyGuiControlButton refreshBtn = new MyGuiControlButton(
+                new Vector2(0, (Size.Value.Y * 0.5f) - (MyGuiConstants.SCREEN_CAPTION_DELTA_Y / 2f)),
+                originAlign: MyGuiDrawAlignEnum.HORISONTAL_RIGHT_AND_VERTICAL_BOTTOM, text: new StringBuilder("Refresh"),
+                onButtonClick: OnRefreshButtonClick);
+            Controls.Add(refreshBtn);
+            
+            MyGuiControlButton closeBtn = new MyGuiControlButton(new Vector2(0, (Size.Value.Y * 0.5f) - (MyGuiConstants.SCREEN_CAPTION_DELTA_Y / 2f)), originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_BOTTOM, text: new StringBuilder("Save"), onButtonClick: OnCloseButtonClick);
             Controls.Add(closeBtn);
 
+        }
+
+        private void OnRefreshButtonClick(MyGuiControlButton btn)
+        {
+            Main.Instance.List.Update();
         }
 
         private void OnCloseButtonClick(MyGuiControlButton btn)
         {
             Main.Instance.SetSkybox(selectedSkybox);
+            Main.Instance.List.OnListReady -= OnSkyboxListReady;
 
             CloseScreen();
+        }
+
+        private void OnSkyboxListReady()
+        {
+            RecreateControls(false);
         }
 
         private void Listbox_ItemsSelected(MyGuiControlListbox listbox)
